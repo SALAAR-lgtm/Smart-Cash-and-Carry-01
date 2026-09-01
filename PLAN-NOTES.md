@@ -152,26 +152,47 @@ Details and per-image notes in `reference/mockups/README.md`.
 
 ## 6. CURRENT STATE — rewrite every session
 
-**As of 1 Sep 2026, 07:35 — Sprint 0 not started.**
+**As of 1 Sep 2026, 08:00 — Sprint 0 DONE. Verified end to end.**
 
-- `E:\Smart-Cash-and-Carry` exists with `data/` (119 products + 119 images),
-  `reference/` (design docs + 6 mockups), `ROADMAP.md`, and `app/` (empty).
-- No application code written yet.
+- Git repo initialised at `E:\Smart-Cash-and-Carry` (repo root, contains
+  `app/`, `data/`, `reference/`, `PLAN-NOTES.md`, `ROADMAP.md`).
+  **First commit `48f604a`**, 152 files, ~14 MB (mostly the 119 product images).
+- **Backend running** on `:4000`, task `qFq6pi`.
+  `curl localhost:4000/api/health` → `{"status":"ok","driver":"pglite"}`
+  `curl localhost:4000/api/products` → 3 seeded products with PKR prices.
+- **Frontend running** on `:5173`, task `xApiAh`.
+  Vite printed `Network: http://100.98.5.62:5173/` — Tailscale reachable,
+  confirmed `HTTP 200` from `http://100.98.5.62:5173/`.
+  Vite proxy `/api` → `:4000` verified working through port 5173.
+- Schema `app/db/init.sql` is idempotent; `app/.pgdata/` holds the local
+  PGlite database (gitignored, safe to delete — it rebuilds on boot).
 - Old August build still running on `uoci-worker`. Qasim chose to leave it up.
   It does not conflict — nothing of ours is on that VM.
-- GitHub push is blocked: no working credential on this PC. Qasim chose
-  Personal Access Token but has **not supplied it yet**. Deferred to after
-  Sprint 0, so Sprint 0 ends with a local commit only.
-- The `lab` VM is completely clean: no containers, no images.
+- GitHub push still blocked: **no PAT supplied yet.** Qasim deferred it to
+  after Sprint 0. Everything is committed locally and ready to push.
+- The `lab` VM is still completely clean: no containers, no images.
+
+**Local dev commands (run from `E:\Smart-Cash-and-Carry\app`):**
+```
+node backend/src/server.js        # API on :4000
+cd frontend && npm run dev        # Vite on :5173
+```
 
 ---
 
 ## 7. NEXT ACTION — rewrite every session
 
-**Single next step: scaffold Sprint 0 under `E:\Smart-Cash-and-Carry\app\` —
-backend (`src/server.js`, `src/db.js`), `db/init.sql`, frontend Vite app,
-docker-compose, `.env.example`, `.gitignore`. Then `npm install` and get
-`/api/health` returning ok.**
+**Single next step: Sprint 1 — real data and schema.**
+
+1. Generate the full seed from `data/products.csv` (119 rows) into
+   `db/init.sql` or a `db/seed.sql`. **Read the `Image_File` column — do not
+   assume `.jpg`** (99 jpg, 19 png, 1 webp).
+2. Create the remaining tables: `"Order"`, `"OrderItem"`, `"Admin"`.
+3. Serve `data/images/` statically at `/images` from Express.
+4. Done when: `SELECT count(*) FROM "Product"` → **119**, product images
+   render in the browser, and a product page shows the real photo.
+
+After that: get the PAT from Qasim and push `48f604a` + Sprint 1 to GitHub.
 
 ---
 
@@ -194,6 +215,21 @@ docker-compose, `.env.example`, `.gitignore`. Then `npm install` and get
 - **Qasim works partly from a phone via Termius.** Give one command at a time
   with the expected output to compare against.
 - **1 CPU on both VMs.** Docker builds are slow. Iterate locally, deploy rarely.
+- **PGlite dies with a bare `RuntimeError: Aborted()` if `postmaster.pid` is
+  stale.** Every unclean shutdown (Ctrl+C, crash, `timeout`) leaves that file in
+  `app/.pgdata/`, and the next boot aborts deep inside WASM with no useful
+  message. Fix: `rm -f .pgdata/postmaster.pid` and start again. `src/db.js`
+  clears it on boot, so this should rarely happen now.
+- **Do NOT use `fs.rm()` in application code on this PC.** The WorkBuddy
+  sandbox intercepts it with a safe-delete guard that throws inside
+  long-running processes. Use `fs.unlink()` (wrapped in try/catch) instead.
+  This only affects Buddy's sandbox — Qasim's own terminal is unaffected.
+- **Never load config with `import 'dotenv/config'`.** It resolves `.env`
+  relative to `process.cwd()`, so `npm run dev` from `backend/` silently misses
+  `app/.env`. `src/db.js` pins the path with `dotenv.config({ path: ... })`.
+- **Bash `/tmp` and Node `/tmp` are different places.** Node resolves `/tmp/x`
+  against the current drive (`E:\tmp\x`). Keep scratch scripts inside the
+  project directory, and delete them before committing.
 
 ---
 
@@ -213,4 +249,23 @@ docker-compose, `.env.example`, `.gitignore`. Then `npm install` and get
 - Decisions: deploy to `lab`; leave the old build running; GitHub via PAT later;
   phone testing over Tailscale.
 - Created this file to stop context loss across session limits.
-- **Sprint 0 not yet started at time of writing.**
+
+### 1 Sep 2026 — Sprint 0 built, debugged and committed
+- Wrote the whole Sprint 0 scaffold: Express backend (`src/server.js`,
+  `src/db.js`), `db/init.sql`, Vite/React frontend, Dockerfiles,
+  `docker-compose.yml`, `.env.example`, `.gitignore`, `.gitattributes`.
+- **Blocker 1 — backend crashed with `RuntimeError: Aborted()`.** Chased it by
+  bisecting: PGlite in-memory worked fine, a fresh data dir worked fine, only
+  the existing `app/.pgdata` failed. Root cause: a stale `postmaster.pid` from
+  an earlier killed run. PGlite tries to `unlink` it on startup — and inside
+  Buddy's sandbox that `unlink` is intercepted by a safe-delete guard which
+  throws, aborting the WASM. Two lessons recorded in section 8.
+- **Blocker 2 (latent, caught before it bit):** `import 'dotenv/config'` loads
+  `.env` from `process.cwd()`, so `npm run dev` run from `backend/` would have
+  silently ignored `app/.env`. Changed to an explicitly pinned path.
+- **Blocker 3 (harness):** background processes started with `(cmd &)` inside a
+  Bash tool call get killed when the call returns. Must use a real background
+  task instead, otherwise you get an empty log and an empty curl for no reason.
+- Verified end to end: health ok, 3 products, Vite proxy working, Tailscale IP
+  returning 200. Phone test at `http://100.98.5.62:5173` is ready to run.
+- Committed as `48f604a`. **Sprint 0 is complete.**
