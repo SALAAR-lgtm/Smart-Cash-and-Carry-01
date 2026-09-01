@@ -1,0 +1,120 @@
+Item_ID,Category,Title,Weight,Price,Image_File
+ITEM-001,Cooking Oils & Ghee,Sufi Canola Oil Pouch,1 Litre,598,ITEM-001.jpg
+ITEM-002,Cooking Oils & Ghee,Sufi Canola Oil Bottle,3 Litre,1845,ITEM-002.jpg
+ITEM-003,Cooking Oils & Ghee,Sufi Canola Oil Bottle (4.5 Ltr),4.5 Litre,2740,ITEM-003.jpg
+ITEM-004,Cooking Oils & Ghee,Sufi Soyabean Oil Pouch ( 1 Ltr ),1 Litre,620,ITEM-004.jpg
+ITEM-005,Cooking Oils & Ghee,Sufi Banaspati Tin,5 Kg,3080,ITEM-005.jpg
+ITEM-006,Cooking Oils & Ghee,Sufi Sunflower Oil Pouch (1Ltr),1 Litre,610,ITEM-006.jpg
+ITEM-007,Cooking Oils & Ghee,Sufi Sunflower Oil Bottle (4.5 Ltr),4.5 Litre,2835,ITEM-007.jpg
+ITEM-008,Cooking Oils & Ghee,Sufi Sunflower Oil Bottle ( 3Ltr),3 Litre,1905,ITEM-008.jpg
+ITEM-009,Toothpastes & Oral Care,Colgate MaxFresh Spicy Fresh Toothpaste 125g,125 g,325,ITEM-009.jpg
+ITEM-010,Toothpastes & Oral Care,Colgate MaxFresh Citrus Blast Toothpaste 125g,125 g,325,ITEM-010.jpg
+ITEM-011,Toothpastes & Oral Care,Colgate Zig Zag Toothbrush - Soft,1 unit,146,ITEM-011.jpg
+ITEM-012,Toothpastes & Oral Care,Colgate Maximum Cavity Toothpaste-Brush pack,75 g,220,ITEM-012.jpg
+ITEM-013,Toothpastes & Oral Care,Colgate Slimsoft Charcoal Toothbrush,1 unit,285,ITEM-013.jpg
+ITEM-014,Toothpastes & Oral Care,Colgate Maximum Cavity Protection Toothpaste  Regular Buy 1 Get 1 Free,200 g,437,ITEM-014.jpg
+ITEM-015,Toothpastes & Oral Care,Colgate Plax Peppermint Anti Germs Mouth Wash,250 ml,540,ITEM-015.jpg
+ITEM-016,Toothpastes & Oral Care,Colgate Sensitive Pro-Relief Original Toothpaste 100g,100 g,490,ITEM-016.jpg
+ITEM-017,Toothpastes & Oral Care,Colgate Plax Fresh Mint Mouthwash,500 ml,1045,ITEM-017.jpg
+ITEM-018,Toothpastes & Oral Care,Colgate Herbal Toothpaste 100g,100 g,220,ITEM-018.png
+ITEM-019,Toothpastes & Oral Care,Colgate MaxFresh Peppermint Ice Toothpaste 125g,125 g,325,ITEM-019.jpg
+ITEM-020,Toothpastes & Oral Care,Colgate MaxFresh Peppermint Ice Toothpaste 75g,75 g,220,ITEM-020.jpg
+ITEM-021,Toothpastes & Oral Care,Colgate Extra Clean Toothbrush - Medium,1 unit,104,ITEM-021.jpg
+ITEM-022,Toothpastes & Oral Care,Colgate Twister Toothbrush - Soft,1 unit,140,ITEM-022.jpg
+ITEM-023,Toothpastes & Oral Care,Colgate Max Fresh Green Tooth Paste,75 g,220,ITEM-023.png
+ITEM-024,Toothpastes & Oral Care,Colgate MaxFresh Spicy Fresh Toothpaste,75 g,220,ITEM-024.jpg
+ITEM-025,Toothpastes & Oral Care,Colgate Herbal Toothpaste 150g,150 g,325,ITEM-025.jpg
+ITEM-026,Toothpastes & Oral Care,Colgate 360 Base Toothbrush - Soft,1 unit,210,ITEM-026.jpg
+ITEM-027,Toothpastes & Oral Care,Colgate Navigator Plus Toothbrush,1 unit,210,ITEM-027.jpg
+ITEM-028,Toothpastes & Oral Care,Colgate Slimsoft Regular Toothbrush,1 unit,200,ITEM-028.jpg
+ITEM-029,Toothpastes & Oral Care,Colgate 360 Sensitive Pro-Relief Toothbrush,1 unit,240,ITEM-029.jpg
+ITEM-030,Toothpastes & Oral Care,Colgate Classic Deep Clean Tooth Brush- Medium,1 unit,80,ITEM-030.jpg
+ITEM-031,Toothpastes & Oral Care,Colgate Total Advanced Health Toothpaste,100 g,349,ITEM-031.jpg
+ITEM-032,Toothpastes & Oral Care,Colgate Premier Clean Soft Medium Brush Buy 2 Get 1 Free,1 unit,180,ITEM-032.jpg
+ITEM-033,Toothpastes & Oral Care,Colgate Total Advance Tooth Paste,150 g,490,ITEM-033.jpg
+ITEM-034,Toothpastes & Oral Care,Colgate Max Fresh Toothpaste125gm,125 g,325,ITEM-034.jpg
+ITEM-035,Toothpastes & Oral Care,Colgate Maximum Cavity Protection Toothpaste,300 g,655,ITEM-035.jpg
+ITEM-036,Toothpastes & Oral Care,Colgate Extra Clean Medium Tooth Brush Medium,1 unit,200,ITEM-036.jpg
+ITEM-037,Toothpastes & Oral Care,Colgate Plax Freshmint Splash Mouth Wash,250 ml,500,ITEM-037.jpg
+ITEM-038,Toothpastes & Oral Care,Colgate Plax Peppermint Fresh Mouthwash,500 ml,1045,ITEM-038.jpg
+ITEM-039,Toothpastes & Oral Care,Colgate Fluoride Toothpaste Cool Stripe 100 ml,100 ml,950,ITEM-039.jpg
+ITEM-040,Toothpastes & Oral Care,Close Up Toothpaste FIFA Gold (85gm),85 g,450,ITEM-040.png
+ITEM-041,Toothpastes & Oral Care,Oral-B PRO-FLEX LUXE,1 unit,565,ITEM-041.jpg
+ITEM-042,Toothpastes & Oral Care,Oral-B 3D White Toothbrush,1 unit,560,ITEM-042.jpg
+ITEM-043,Toothpastes & Oral Care,Oral-B Gentle Care Toothbrush,1 unit,560,ITEM-043.png
+ITEM-044,Toothpastes & Oral Care,Oral-B Pro Expert Toothbrush,1 unit,560,ITEM-044.jpg
+ITEM-045,Toothpastes & Oral Care,Colgate Sensitive Pro-Relief Expert (With Free Slim Soft Brush),100 g,440,ITEM-045.jpg
+ITEM-046,Tea & Coffee,Lipton Yellow Label Tea - 900g - Save Rs. 200,900 g,1999,ITEM-046.jpg
+ITEM-047,Tea & Coffee,Lipton Danedar Tea - 900g,900 g,1800,ITEM-047.jpg
+ITEM-048,Tea & Coffee,Lipton Earl Grey (25 Tea Bags),1 unit,500,ITEM-048.jpg
+ITEM-049,Tea & Coffee,Lipton Lemon & Ginger (20 Tea bags),1 unit,900,ITEM-049.jpg
+ITEM-050,Tea & Coffee,Lipton Chamomile (20 Tea Bags),1 unit,900,ITEM-050.jpg
+ITEM-051,Tea & Coffee,Lipton Mint (20 Tea Bags),1 unit,900,ITEM-051.jpg
+ITEM-052,Tea & Coffee,Lipton Yellow Label (430 gm),430 g,1100,ITEM-052.png
+ITEM-053,Tea & Coffee,Lipton Danedar 170G - Black Tea,170 g,400,ITEM-053.jpg
+ITEM-054,Tea & Coffee,Lipton Yellow Label Tea - 85g - Save Rs. 20,85 g,200,ITEM-054.jpg
+ITEM-055,Tea & Coffee,Lipton Green Tea Mixed Berries (25 Tea Bags),1 unit,300,ITEM-055.jpg
+ITEM-056,Tea & Coffee,Lipton Danedar Tea - 430g ,430 g,1049,ITEM-056.jpg
+ITEM-057,Tea & Coffee,Lipton English Breakfast (25 Tea Bags),1 unit,500,ITEM-057.jpg
+ITEM-058,Tea & Coffee,Lipton Hibiscus (20 Tea Bags),1 unit,900,ITEM-058.jpg
+ITEM-059,Tea & Coffee,Tapal Danedar Tea 900 gm,900 g,1850,ITEM-059.jpg
+ITEM-060,Tea & Coffee,Tapal Danedar Tea,170 g,390,ITEM-060.jpg
+ITEM-061,Tea & Coffee,Tapal Family Mixture Tea,430 g,950,ITEM-061.jpg
+ITEM-062,Tea & Coffee,Tapal Lemon Green Tea Bags 90,1 unit,720,ITEM-062.jpg
+ITEM-063,Soaps & Body Wash,LUX Soap Nourished Glow LOTUS Vitamin C + Floral Oil 98 gm,98 g,190,ITEM-063.jpg
+ITEM-064,Soaps & Body Wash,Lux Soap Pink Vitamin C Glycerine,128 g,160,ITEM-064.png
+ITEM-065,Soaps & Body Wash,Palmolive Naturals Refreshing Glow 3in1 98gm*3,98 g,364,ITEM-065.jpg
+ITEM-066,Soaps & Body Wash,Palmolive Naturals Hydrating Glow Bar Soap,98 g,128,ITEM-066.jpg
+ITEM-067,Soaps & Body Wash,Palmolive Naturals Radiant Glow Bar Soap,98 g,118,ITEM-067.webp
+ITEM-068,Soaps & Body Wash,Palmolive Naturals Radiant Glow Bar Soap,165 g,165,ITEM-068.jpg
+ITEM-069,Soaps & Body Wash,Palmolive Radiant Glow Soap 3in1 Save Rs.25,130 g,425,ITEM-069.jpg
+ITEM-070,Soaps & Body Wash,LUX Body Wash Fresh Aloe Vera & Freesia Scent 250ml,250 ml,450,ITEM-070.jpg
+ITEM-071,Soaps & Body Wash,Lux Renewed Glow Body Wash,450 ml,950,ITEM-071.jpg
+ITEM-072,Soaps & Body Wash,Lux Clear Glow Body Wash,450 ml,950,ITEM-072.jpg
+ITEM-073,Soaps & Body Wash,Lux Bouncy Glow Body Wash,450 ml,950,ITEM-073.jpg
+ITEM-074,Soaps & Body Wash,Dettol Cooling Sensation Soap Pack Of 3 Save Rs. 25,1 unit,425,ITEM-074.jpg
+ITEM-075,Soaps & Body Wash,Lux Pink Rose Glow Soap,167 g,180,ITEM-075.jpg
+ITEM-076,Soaps & Body Wash,Lux Pink Rose Glow Soap,50 g,60,ITEM-076.jpg
+ITEM-077,Soaps & Body Wash,Dettol Soap Fresh Lemon Anti bacterial,95 g,130,ITEM-077.jpg
+ITEM-078,Masalas & Spices,National Chat Masala,50 g,120,ITEM-078.jpg
+ITEM-079,Masalas & Spices,National Chicken Tikka Masala Mix,45 g,150,ITEM-079.jpg
+ITEM-080,Masalas & Spices,National Quorma Masala Mix Double Pack,100 g,290,ITEM-080.jpg
+ITEM-081,Masalas & Spices,National Chicken Tikka Masala Recipe Mix Double Pack,100 g,290,ITEM-081.jpg
+ITEM-082,Masalas & Spices,National Pulao Masala Recipe Mix,50 g,150,ITEM-082.jpg
+ITEM-083,Masalas & Spices,National Achar Gosht Masala Recipe Mix,100 g,290,ITEM-083.jpg
+ITEM-084,Masalas & Spices,National Karachi khas Nihari Masala Recipe Mix,60 g,150,ITEM-084.jpg
+ITEM-085,Masalas & Spices,National Shami Kabab Masala Mix,45 g,150,ITEM-085.png
+ITEM-086,Masalas & Spices,National Haleem Masala Mix,48 g,149,ITEM-086.png
+ITEM-087,Masalas & Spices,National Fish Masala Recipe Mix,50 g,150,ITEM-087.png
+ITEM-088,Masalas & Spices,National Murghi   نیشنل مرغ مصالحہ,50 g,150,ITEM-088.png
+ITEM-089,Masalas & Spices,National Paaya   نیشنل پايا مصالحہ,39 g,150,ITEM-089.png
+ITEM-090,Masalas & Spices,National Fish Masala Mix,100 g,290,ITEM-090.jpg
+ITEM-091,Masalas & Spices,National Biryani Masala Mix,45 g,150,ITEM-091.jpg
+ITEM-092,Masalas & Spices,National Chat Masala,100 g,190,ITEM-092.jpg
+ITEM-093,Masalas & Spices,National Quorma Masala Mix,50 g,150,ITEM-093.jpg
+ITEM-094,Masalas & Spices,National Karahi Gosht Masala Mix,100 g,290,ITEM-094.png
+ITEM-095,Masalas & Spices,National Sindhi Biryani Masala Mix,46 g,150,ITEM-095.jpg
+ITEM-096,Masalas & Spices,National Karachi Khaas Bombay Biryani,70.04 g,150,ITEM-096.jpg
+ITEM-097,Masalas & Spices,National Karachi Khaas Bombay Biryani Masala,140 g,290,ITEM-097.jpg
+ITEM-098,Masalas & Spices,National Chapli Kabab Masala Mix,72 g,150,ITEM-098.png
+ITEM-099,Masalas & Spices,National Seekh Kabab Masala Recipe Mix,50 g,150,ITEM-099.png
+ITEM-100,Masalas & Spices,National Pulao Masala,100 g,290,ITEM-100.png
+ITEM-101,Masalas & Spices,National Quick Cook Haleem Masala Mix,300 g,314,ITEM-101.png
+ITEM-102,Masalas & Spices,National Murghi Masala Mix Double Pack,100 g,290,ITEM-102.jpg
+ITEM-103,Masalas & Spices,National Daighi Danedar Haleem,300 g,350,ITEM-103.jpg
+ITEM-104,Masalas & Spices,National Karachi Khaas Nihari Double Pack,110 g,275,ITEM-104.jpg
+ITEM-105,Masalas & Spices,National Red Chilli Powder,100 g,200,ITEM-105.jpg
+ITEM-106,Masalas & Spices,National Turmeric Powder,50 g,140,ITEM-106.jpg
+ITEM-107,Masalas & Spices,National Kali Mirch Powder,25 g,165,ITEM-107.jpg
+ITEM-108,Masalas & Spices,National Red Chilli Powder,200 g,380,ITEM-108.png
+ITEM-109,Masalas & Spices,National Coriander Powder,200 g,350,ITEM-109.jpg
+ITEM-110,Masalas & Spices,National Red Chilli Powder,50 g,110,ITEM-110.png
+ITEM-111,Masalas & Spices,National Ginger Powder,50 g,250,ITEM-111.jpg
+ITEM-112,Masalas & Spices,National Red Chilli Powder,400 g,730,ITEM-112.png
+ITEM-113,Masalas & Spices,National Black Pepper Powder,50 g,310,ITEM-113.jpg
+ITEM-114,Masalas & Spices,National Garam Masala Powder,50 g,330,ITEM-114.jpg
+ITEM-115,Masalas & Spices,National Turmeric Powder,100 g,270,ITEM-115.jpg
+ITEM-116,Masalas & Spices,National Garam Masala Powder,25 g,165,ITEM-116.jpg
+ITEM-117,Masalas & Spices,National Garlic Powder,50 g,150,ITEM-117.jpg
+ITEM-118,Masalas & Spices,National Cumin Seeds,50 g,350,ITEM-118.jpg
+ITEM-119,Masalas & Spices,National Kasuri Methi   نیشنل قصوری میتھی,25 g,80,ITEM-119.jpg

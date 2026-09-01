@@ -1,0 +1,55 @@
+# Runs on the `lab` VM (145.241.110.17).
+# Local dev on Qasim's PC does NOT use this file — Docker cannot run there.
+# Locally the backend uses PGlite and the frontend uses `npm run dev`.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Port 5432 is deliberately NOT published to the host.
+    # The old build exposed Postgres to the public internet (0.0.0.0:5432).
+    # The backend reaches this over the Docker network by service name "db",
+    # so no host port is needed. Safer, and the port stays free.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    environment:
+      DB_DRIVER: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      BACKEND_PORT: 4000
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8083:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

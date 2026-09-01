@@ -1,0 +1,13 @@
+# Normalise line endings so files checked out on the Linux VM match what we
+# wrote on Windows. Without this, shell scripts and SQL pick up CRLF and break
+# in subtle ways after `git clone` on the VM.
+* text=auto eol=lf
+
+# Binary assets - never touch, never diff.
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary

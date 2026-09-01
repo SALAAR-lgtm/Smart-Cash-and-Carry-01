@@ -1,0 +1,12 @@
+node_modules/
+dist/
+
+# real secrets
+.env
+
+# local PGlite database
+.pgdata/
+
+# logs
+*.log
+npm-debug.log*

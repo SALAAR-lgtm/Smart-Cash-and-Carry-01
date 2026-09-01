@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Cash & Carry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            purple: '#4A148C',
+                            purpleDark: '#380b6e',
+                            red: '#D32F2F',
+                            redHover: '#b71c1c',
+                            bg: '#F8F9FA'
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 4px 20px rgba(0, 0, 0, 0.05)',
+                        'up': '0 -4px 10px rgba(0, 0, 0, 0.03)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Smooth Drawer Transitions */
+        .drawer { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .drawer-closed { transform: translateY(100%); }
+        .drawer-open { transform: translateY(0); }
+        
+        /* Fade Transitions */
+        .fade { transition: opacity 0.2s ease-in-out; }
+        .fade-out { opacity: 0; pointer-events: none; }
+        .fade-in { opacity: 1; pointer-events: auto; }
+    </style>
+</head>
+<body class="bg-brand-bg font-sans antialiased text-gray-900 h-screen flex flex-col overflow-hidden selection:bg-brand-purple selection:text-white">
+
+    <!-- Step 1: Browse & Select -->
+    <header class="bg-brand-purple text-white z-30 shadow-md shrink-0">
+        <div class="px-5 pt-6 pb-4 flex justify-between items-center">
+            <div>
+                <!-- LOGO SECTION (from logo design, adapted for purple header) -->
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-shopping-cart text-brand-red text-4xl"></i>
+                    <div class="flex flex-col justify-center mt-1">
+                        <span class="text-3xl font-black text-white leading-none tracking-tight">SMART</span>
+                        <span class="text-sm font-bold text-brand-red leading-none tracking-wide">CASH & CARRY</span>
+                    </div>
+                </div>
+                <div class="flex items-center mt-2 text-purple-200 text-xs font-medium bg-brand-purpleDark inline-flex px-2 py-1 rounded-md">
+                    <i class="fas fa-map-marker-alt mr-1.5 text-brand-red"></i>
+                    <span>Delivery: Shakar Garh</span>
+                </div>
+            </div>
+            <button class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition">
+                <i class="fas fa-user text-sm"></i>
+            </button>
+        </div>
+        
+        <div class="px-5 pb-4">
+            <div class="relative">
+                <input type="text" placeholder="Search groceries..." class="w-full bg-white text-gray-900 rounded-xl py-3 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-brand-red shadow-inner font-medium text-sm placeholder-gray-400 transition-shadow">
+                <i class="fas fa-search absolute left-4 top-3.5 text-gray-400 text-sm"></i>
+            </div>
+        </div>
+
+        <div class="px-5 pb-4 overflow-x-auto no-scrollbar flex gap-2.5">
+            <button class="bg-brand-red text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-sm whitespace-nowrap">All</button>
+            <button class="bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition">Staples</button>
+            <button class="bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition">Dairy</button>
+            <button class="bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition">Snacks</button>
+        </div>
+    </header>
+
+    <main class="flex-grow overflow-y-auto p-5 pb-24" id="main-scroll">
+        <div id="product-grid" class="grid grid-cols-2 gap-4">
+            <!-- Dynamic Products -->
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bg-white shadow-up fixed bottom-0 w-full z-30 pb-safe border-t border-gray-100">
+        <div class="flex justify-around items-center h-16">
+            <button class="flex flex-col items-center justify-center w-full text-brand-purple h-full">
+                <i class="fas fa-store text-lg mb-1"></i>
+                <span class="text-[10px] font-bold">Shop</span>
+            </button>
+            <button class="flex flex-col items-center justify-center w-full text-gray-400 hover:text-gray-600 h-full transition">
+                <i class="fas fa-th-large text-lg mb-1"></i>
+                <span class="text-[10px] font-semibold">Explore</span>
+            </button>
+            <button onclick="UI.toggleCart()" class="flex flex-col items-center justify-center w-full text-gray-400 hover:text-brand-purple h-full relative transition">
+                <div class="relative">
+                    <i class="fas fa-shopping-basket text-lg mb-1"></i>
+                    <span id="nav-cart-badge" class="absolute -top-1.5 -right-2 bg-brand-red text-white text-[9px] font-bold h-4 w-4 flex items-center justify-center rounded-full border border-white hidden transition-all scale-0">0</span>
+                </div>
+                <span class="text-[10px] font-semibold">Cart</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- UI Overlays -->
+    <div id="backdrop" onclick="UI.closeAll()" class="fixed inset-0 bg-black/60 z-40 fade fade-out backdrop-blur-sm"></div>
+
+    <!-- Step 2: Cart Drawer -->
+    <div id="cart-drawer" class="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-3xl shadow-soft drawer drawer-closed h-[75vh] flex flex-col">
+        <div class="px-6 py-5 flex justify-between items-center border-b border-gray-100 shrink-0">
+            <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-shopping-basket text-brand-purple mr-2.5"></i>Your Order
+            </h2>
+            <button onclick="UI.toggleCart()" class="text-gray-400 hover:text-brand-red transition bg-gray-50 rounded-full w-8 h-8 flex items-center justify-center">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div id="cart-items-container" class="flex-grow overflow-y-auto p-6 flex flex-col gap-4">
+            <!-- Dynamic Cart Items -->
+        </div>
+
+        <div class="p-6 bg-white border-t border-gray-100 shadow-[0_-4px_15px_rgba(0,0,0,0.02)] shrink-0">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-gray-500 font-medium text-sm">Total Amount</span>
+                <span id="cart-total" class="font-black text-xl text-brand-purple">Rs. 0</span>
+            </div>
+            <button onclick="UI.openCheckout()" id="checkout-btn" class="w-full bg-brand-red text-white font-bold py-4 rounded-xl shadow-md hover:bg-brand-redHover active:scale-[0.98] transition-all flex justify-center items-center opacity-50 cursor-not-allowed" disabled>
+                Proceed to Checkout <i class="fas fa-arrow-right ml-2 text-sm"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 3: COD Checkout Modal -->
+    <div id="checkout-modal" class="fixed inset-0 z-50 bg-white flex flex-col drawer drawer-closed">
+        <header class="bg-brand-purple text-white px-5 py-4 flex items-center shadow-md shrink-0">
+            <button onclick="UI.closeCheckout()" class="mr-4 text-white hover:text-gray-200 p-1">
+                <i class="fas fa-arrow-left text-lg"></i>
+            </button>
+            <h2 class="text-lg font-bold">Cash on Delivery</h2>
+        </header>
+
+        <div class="flex-grow overflow-y-auto p-6">
+            <div class="bg-brand-bg rounded-xl p-4 mb-6 border border-gray-100">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm text-gray-600">Order Total</span>
+                    <span id="checkout-total" class="font-bold text-brand-purple text-lg">Rs. 0</span>
+                </div>
+                <p class="text-[11px] text-gray-500"><i class="fas fa-info-circle mr-1"></i>Pay in cash upon delivery.</p>
+            </div>
+
+            <form id="checkout-form" class="space-y-4" onsubmit="event.preventDefault(); alert('Order Placed Successfully!'); UI.closeAll();">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1.5 ml-1">Full Name</label>
+                    <input type="text" required class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition text-sm font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1.5 ml-1">Phone Number</label>
+                    <input type="tel" required class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3.5 focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition text-sm font-medium" placeholder="03XX XXXXXXX">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1.5 ml-1">Delivery Address</label>
+                    <textarea required rows="3" class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-purple focus:ring-1 focus:ring-brand-purple transition text-sm font-medium resize-none" placeholder="House/Street, Sector, Shakar Garh"></textarea>
+                </div>
+                
+                <div class="pt-6 pb-safe">
+                    <button type="submit" class="w-full bg-brand-purple text-white font-bold py-4 rounded-xl shadow-lg hover:bg-brand-purpleDark active:scale-[0.98] transition-all flex justify-center items-center">
+                        Confirm Order <i class="fas fa-check-circle ml-2"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA STATE ---
+        const products = [
+            { id: '1', name: 'Premium Super Kernel Basmati Rice', price: 1450, unit: '5 kg', img: 'ITEM-001.jpg' },
+            { id: '2', name: 'Canola Cooking Oil Pouch', price: 480, unit: '1 Liter', img: 'ITEM-002.jpg' },
+            { id: '3', name: 'Fresh Full Cream Milk', price: 220, unit: '1 Liter', img: 'ITEM-003.jpg' },
+            { id: '4', name: 'Refined White Sugar', price: 140, unit: '1 kg', img: 'ITEM-004.jpg' },
+            { id: '5', name: 'Chakki Atta (Wheat Flour)', price: 1350, unit: '10 kg', img: 'ITEM-005.jpg' },
+            { id: '6', name: 'Strong Black Tea Blend', price: 450, unit: '190 g', img: 'ITEM-006.jpg' }
+        ];
+
+        let cart = {}; // Format: { productId: quantity }
+
+        // --- RENDER LOGIC ---
+        const Render = {
+            products: () => {
+                const grid = document.getElementById('product-grid');
+                grid.innerHTML = products.map(p => `
+                    <div class="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden flex flex-col group">
+                        <div class="h-32 bg-white flex items-center justify-center p-3 relative">
+                            <div class="absolute inset-0 bg-gray-50 -z-10"></div>
+                            <img src="${p.img}" alt="${p.name}" class="object-contain h-full w-full" onerror="this.src='https://placehold.co/200x200/f8f9fa/a1a1aa?text=Item'">
+                        </div>
+                        <div class="p-3.5 flex flex-col flex-grow border-t border-gray-50">
+                            <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">${p.unit}</span>
+                            <h3 class="text-xs font-bold text-gray-800 leading-tight mb-3 line-clamp-2">${p.name}</h3>
+                            <div class="mt-auto flex justify-between items-center">
+                                <span class="font-black text-brand-purple text-sm">Rs. ${p.price}</span>
+                                <button onclick="Cart.add('${p.id}', this)" class="bg-brand-bg text-brand-purple h-8 w-8 rounded-full flex items-center justify-center hover:bg-brand-red hover:text-white transition-colors">
+                                    <i class="fas fa-plus text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            },
+
+            cart: () => {
+                const container = document.getElementById('cart-items-container');
+                const totalEl = document.getElementById('cart-total');
+                const checkoutTotalEl = document.getElementById('checkout-total');
+                const checkoutBtn = document.getElementById('checkout-btn');
+                const badge = document.getElementById('nav-cart-badge');
+                
+                const itemIds = Object.keys(cart);
+                
+                // Badge Update
+                const totalItems = Object.values(cart).reduce((a, b) => a + b, 0);
+                if(totalItems > 0) {
+                    badge.innerText = totalItems;
+                    badge.classList.remove('hidden', 'scale-0');
+                    badge.classList.add('scale-100');
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                } else {
+                    badge.classList.add('scale-0');
+                    setTimeout(() => badge.classList.add('hidden'), 200);
+                    checkoutBtn.disabled = true;
+                    checkoutBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+
+                // Cart List Update
+                if (itemIds.length === 0) {
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full text-gray-300 py-10">
+                            <i class="fas fa-shopping-cart text-5xl mb-4"></i>
+                            <p class="font-medium text-sm text-gray-400">Your basket is empty</p>
+                        </div>`;
+                    totalEl.innerText = 'Rs. 0';
+                    checkoutTotalEl.innerText = 'Rs. 0';
+                    return;
+                }
+
+                let total = 0;
+                container.innerHTML = itemIds.map(id => {
+                    const product = products.find(p => p.id === id);
+                    const qty = cart[id];
+                    total += product.price * qty;
+                    return `
+                        <div class="flex items-center gap-4 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                            <img src="${product.img}" class="w-16 h-16 object-contain bg-gray-50 rounded-lg p-1" onerror="this.src='https://placehold.co/100x100/f8f9fa/a1a1aa?text=Item'">
+                            <div class="flex-grow">
+                                <h4 class="text-xs font-bold text-gray-800 line-clamp-1 mb-1">${product.name}</h4>
+                                <span class="text-brand-purple font-black text-sm">Rs. ${product.price}</span>
+                            </div>
+                            <div class="flex items-center bg-brand-bg rounded-lg p-1 border border-gray-200">
+                                <button onclick="Cart.update('${id}', -1)" class="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-brand-red"><i class="fas fa-minus text-xs"></i></button>
+                                <span class="w-6 text-center text-xs font-bold">${qty}</span>
+                                <button onclick="Cart.update('${id}', 1)" class="w-7 h-7 flex items-center justify-center text-gray-600 hover:text-brand-purple"><i class="fas fa-plus text-xs"></i></button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                const formattedTotal = `Rs. ${total.toLocaleString()}`;
+                totalEl.innerText = formattedTotal;
+                checkoutTotalEl.innerText = formattedTotal;
+            }
+        };
+
+        // --- CART LOGIC ---
+        const Cart = {
+            add: (id, btnElement) => {
+                cart[id] = (cart[id] || 0) + 1;
+                Render.cart();
+                
+                // Micro-interaction
+                const originalHTML = btnElement.innerHTML;
+                btnElement.innerHTML = '<i class="fas fa-check text-sm"></i>';
+                btnElement.classList.add('bg-green-500', 'text-white');
+                btnElement.classList.remove('bg-brand-bg', 'text-brand-purple');
+                setTimeout(() => {
+                    btnElement.innerHTML = originalHTML;
+                    btnElement.classList.remove('bg-green-500', 'text-white');
+                    btnElement.classList.add('bg-brand-bg', 'text-brand-purple');
+                }, 800);
+            },
+            update: (id, delta) => {
+                if (cart[id]) {
+                    cart[id] += delta;
+                    if (cart[id] <= 0) delete cart[id];
+                    Render.cart();
+                }
+            }
+        };
+
+        // --- UI OVERLAY LOGIC ---
+        const UI = {
+            toggleCart: () => {
+                const drawer = document.getElementById('cart-drawer');
+                const backdrop = document.getElementById('backdrop');
+                
+                if (drawer.classList.contains('drawer-closed')) {
+                    drawer.classList.replace('drawer-closed', 'drawer-open');
+                    backdrop.classList.replace('fade-out', 'fade-in');
+                } else {
+                    drawer.classList.replace('drawer-open', 'drawer-closed');
+                    backdrop.classList.replace('fade-in', 'fade-out');
+                }
+            },
+            openCheckout: () => {
+                UI.toggleCart(); // Close cart
+                setTimeout(() => {
+                    document.getElementById('checkout-modal').classList.replace('drawer-closed', 'drawer-open');
+                }, 150); // slight delay to let cart close
+            },
+            closeCheckout: () => {
+                document.getElementById('checkout-modal').classList.replace('drawer-open', 'drawer-closed');
+            },
+            closeAll: () => {
+                document.getElementById('cart-drawer').classList.replace('drawer-open', 'drawer-closed');
+                document.getElementById('checkout-modal').classList.replace('drawer-open', 'drawer-closed');
+                document.getElementById('backdrop').classList.replace('fade-in', 'fade-out');
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            Render.products();
+            Render.cart();
+        });
+    </script>
+</body>
+</html>
