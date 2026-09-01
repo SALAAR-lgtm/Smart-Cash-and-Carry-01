@@ -56,6 +56,20 @@ Not "Buddy writes it" — that pattern already failed once (see section 9).
 - No native PostgreSQL. `gh` CLI not installed.
 - Project root: **`E:\Smart-Cash-and-Carry`**
 
+### GitHub — connected 1 Sep 2026
+- Account **SALAAR-lgtm**, repo
+  **`git@github.com:SALAAR-lgtm/Smart-Cash-and-Carry-01.git`**
+  (canonical name is capitalised; the lowercase form still works but warns).
+- Branch **`master`**, tracking `origin/master`.
+- **Dedicated SSH key `~/.ssh/github_scc`** (ed25519, comment `smart-cash-carry`),
+  wired into `~/.ssh/config` under a `Host github.com` block with
+  `IdentitiesOnly yes`. Plain `git push` just works — no key flags, no token.
+- **Do not reuse the VM keys for GitHub.** All five (`greenscape_oci`,
+  `id_ed25519_hermes_oci`, `ssh-key-2026-07-01.key`, `ssh-key-2026-07-29-lab.key`,
+  `ssh-key-2026-07-29.key`) are rejected by GitHub. They are OCI VM keys only.
+- There is **no GitHub MCP connector** — only Notion. Pushing happens through
+  the terminal with plain `git`, which is fine.
+
 ### `lab` — the deploy target
 - Public IP **`145.241.110.17`**, Tailscale **`100.126.250.92`**, hostname `lab`
 - Ubuntu 24.04, **1 CPU, 3.8 GB RAM, no swap**, 38 GB disk free
@@ -152,18 +166,25 @@ Details and per-image notes in `reference/mockups/README.md`.
 
 ## 6. CURRENT STATE — rewrite every session
 
-**As of 1 Sep 2026, 08:00 — Sprint 0 DONE. Verified end to end.**
+**As of 1 Sep 2026, 15:40 — Sprint 0 DONE, PUSHED TO GITHUB. Servers STOPPED.**
 
-- Git repo initialised at `E:\Smart-Cash-and-Carry` (repo root, contains
-  `app/`, `data/`, `reference/`, `PLAN-NOTES.md`, `ROADMAP.md`).
-  **First commit `48f604a`**, 152 files, ~14 MB (mostly the 119 product images).
-- **Backend running** on `:4000`, task `qFq6pi`.
+- Git repo at `E:\Smart-Cash-and-Carry` (repo root, contains `app/`, `data/`,
+  `reference/`, `PLAN-NOTES.md`, `ROADMAP.md`).
+  Two commits: **`48f604a`** (Sprint 0 code) and **`03c553b`** (docs).
+- **Both commits are on GitHub** (`SALAAR-lgtm/Smart-Cash-and-Carry-01`,
+  branch `master`). The project now has an off-machine copy — the single
+  biggest risk from this morning is closed.
+- **Still unverified:** the phone test at `http://100.98.5.62:5173`. The URL
+  answered 200 from this PC, but Qasim has not yet loaded it on the phone.
+- Sprint 0 was verified end to end earlier today, then the servers were stopped:
   `curl localhost:4000/api/health` → `{"status":"ok","driver":"pglite"}`
-  `curl localhost:4000/api/products` → 3 seeded products with PKR prices.
-- **Frontend running** on `:5173`, task `xApiAh`.
-  Vite printed `Network: http://100.98.5.62:5173/` — Tailscale reachable,
-  confirmed `HTTP 200` from `http://100.98.5.62:5173/`.
-  Vite proxy `/api` → `:4000` verified working through port 5173.
+  `curl localhost:4000/api/products` → 3 seeded products with PKR prices
+  Vite on `:5173`, proxy `/api` → `:4000`, `HTTP 200` via `100.98.5.62:5173`
+- **Right now both servers are down** — confirmed `HTTP 000` on both ports.
+  That is not a regression: background processes die when the tool call that
+  started them returns. Just restart them (commands below) to pick up.
+- **Still unverified:** the phone test at `http://100.98.5.62:5173`. The URL
+  answered 200 from this PC, but Qasim has not yet loaded it on the phone.
 - Schema `app/db/init.sql` is idempotent; `app/.pgdata/` holds the local
   PGlite database (gitignored, safe to delete — it rebuilds on boot).
 - Old August build still running on `uoci-worker`. Qasim chose to leave it up.
@@ -192,7 +213,9 @@ cd frontend && npm run dev        # Vite on :5173
 4. Done when: `SELECT count(*) FROM "Product"` → **119**, product images
    render in the browser, and a product page shows the real photo.
 
-After that: get the PAT from Qasim and push `48f604a` + Sprint 1 to GitHub.
+**Push after every sprint.** GitHub is now set up, so this is a normal step,
+not a blocker: `git add -A && git commit -m "..." && git push`.
+Before pushing, re-run the secret scan in section 8 — the repo is public.
 
 ---
 
@@ -230,6 +253,19 @@ After that: get the PAT from Qasim and push `48f604a` + Sprint 1 to GitHub.
 - **Bash `/tmp` and Node `/tmp` are different places.** Node resolves `/tmp/x`
   against the current drive (`E:\tmp\x`). Keep scratch scripts inside the
   project directory, and delete them before committing.
+- **`curl` to localhost lies inside Buddy's sandbox.** A proxy is set
+  (`http_proxy=127.0.0.1:34142`), so `curl localhost:4000` returns **`HTTP 502`
+  even when the server is fine.** That 502 is a false negative. Always use
+  `curl --noproxy '*' http://localhost:4000/...`. Real status codes:
+  `HTTP 000` = connection refused (genuinely down), `200`/`{}` = fine.
+  Qasim's own terminal has no proxy, so this only affects Buddy.
+- **The GitHub repo is public — scan before every push:**
+  ```
+  git ls-files | grep -i "\.env$"          # must print nothing
+  git grep -nIE "(PRIVATE KEY|ghp_|github_pat_|AKIA[0-9A-Z]{16})" -- .
+  ```
+  `app/.env` is gitignored and stays local. Never commit it. If a secret is ever
+  pushed, rotating it is the fix — deleting the commit does not un-leak it.
 
 ---
 
@@ -269,3 +305,20 @@ After that: get the PAT from Qasim and push `48f604a` + Sprint 1 to GitHub.
 - Verified end to end: health ok, 3 products, Vite proxy working, Tailscale IP
   returning 200. Phone test at `http://100.98.5.62:5173` is ready to run.
 - Committed as `48f604a`. **Sprint 0 is complete.**
+
+### 1 Sep 2026 — GitHub connected, first push
+- Qasim asked for a status report, then whether there was GitHub write access.
+  There was none, and checking it properly took some care: the obvious test
+  `ssh -T git@github.com` **only tries standard-named keys**, and every key on
+  this machine has a custom name, so the default test proves nothing. Had to
+  pass `-i <key> -o IdentitiesOnly=yes` per key. All five VM keys rejected.
+- No `gh` CLI, no credential helper, no stored credentials, no GitHub MCP
+  connector (only Notion is connected — MCP push is not available at all).
+- Set up a **dedicated SSH key** instead of a PAT: `~/.ssh/github_scc`, added to
+  GitHub by Qasim, bound in `~/.ssh/config` with `IdentitiesOnly yes`.
+  Chosen over a PAT because it never expires and is revocable per-key.
+- Created the repo `Smart-Cash-and-Carry-01` (public) and pushed both commits.
+  GitHub's canonical name is capitalised — set the remote to that form so
+  pushes stop warning "This repository moved".
+- Ran a secret scan before the first push: `app/.env` untracked, no keys or
+  tokens in any tracked file. Recorded the scan in section 8.
