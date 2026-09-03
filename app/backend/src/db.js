@@ -60,11 +60,21 @@ if (driver === 'pglite') {
   exec = async (sql) => { await pool.query(sql); };
 }
 
-// Runs db/init.sql on every boot. Every statement in it is idempotent
-// (CREATE TABLE IF NOT EXISTS + ON CONFLICT DO NOTHING), so re-running is safe.
+// Runs db/init.sql (schema) then db/seed.sql (catalogue) on every boot.
+// Every statement in both is idempotent (CREATE TABLE IF NOT EXISTS +
+// ON CONFLICT DO NOTHING), so re-running is safe.
+//
+// seed.sql is generated from data/products.csv by tools/generate-seed.py —
+// never edited by hand.
+//
+// PGlite's exec() cannot run multiple statements in one call the way the `pg`
+// driver can, so both files are executed as a single string each. That works
+// because neither file contains a statement PGlite splits on.
 export async function initDb() {
-  const sql = await readFile(path.join(here, '../../db/init.sql'), 'utf8');
-  await exec(sql);
+  for (const file of ['init.sql', 'seed.sql']) {
+    const sql = await readFile(path.join(here, '../../db', file), 'utf8');
+    await exec(sql);
+  }
 }
 
 export { query, driver };

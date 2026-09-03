@@ -1,189 +1,51 @@
-/* Brand palette, taken from the real storefront signboard.
-   Purple primary, red accent, white cards.
-   reference/design.md is orange/green from a competitor — layout reference only. */
+@import "tailwindcss";
 
-:root {
-  --purple: #4a148c;
-  --purple-dark: #380b6e;
-  --purple-tint: #f3ecfa;
-  --red: #d32f2f;
-  --red-dark: #b71c1c;
-  --ink: #1f1b24;
-  --muted: #6b6472;
-  --line: #e6e0ee;
-  --surface: #ffffff;
-  --bg: #faf8fc;
+/* Brand palette, lifted from a photo of the real storefront signboard in
+   Noorkot: deep purple primary, red accent, white cards.
+   reference/design.md is orange/green scraped from a competitor
+   (grocerapp.pk) — layout reference only, NEVER its colours.
+
+   Tailwind v4 turns these @theme variables into utilities automatically:
+     --color-brand  ->  bg-brand, text-brand, border-brand
+     --color-accent ->  text-accent, bg-accent
+   They are named by ROLE (brand/accent) rather than by hue (purple/red) so a
+   future palette change is one edit here instead of a sweep through every
+   component we are about to build in Sprints 2-5. */
+@theme {
+  --color-brand: #4a148c;
+  --color-brand-dark: #380b6e;
+  --color-brand-tint: #f3ecfa;
+
+  --color-accent: #d32f2f;
+  --color-accent-dark: #b71c1c;
+
+  --color-ink: #1f1b24;
+  --color-muted: #6b6472;
+  --color-line: #e6e0ee;
+  --color-bg: #faf8fc;
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
-* {
-  box-sizing: border-box;
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
-.app {
-  min-height: 100vh;
-}
-
-.topbar {
-  background: var(--purple);
-  color: #fff;
-  padding: 14px 16px;
-  box-shadow: 0 1px 6px rgba(56, 11, 110, 0.25);
-}
-
-.topbar-inner {
-  max-width: 960px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo-mark {
-  width: 26px;
-  height: 26px;
-  flex: 0 0 26px;
-  border-radius: 6px;
-  background: #fff;
-  position: relative;
-}
-
-.logo-mark::after {
-  content: '';
+/* The basket glyph in the header. Drawn in CSS rather than shipped as an image
+   so it stays crisp at any size and costs nothing to load. */
+.basket-mark::after {
+  content: "";
   position: absolute;
   inset: 7px 6px 6px 6px;
-  border: 2px solid var(--purple);
+  border: 2px solid var(--color-brand);
   border-top: none;
   border-radius: 0 0 4px 4px;
-}
-
-.topbar h1 {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 500;
-  letter-spacing: 0.2px;
-}
-
-.tagline {
-  margin: 2px 0 0;
-  font-size: 12px;
-  opacity: 0.75;
-}
-
-.content {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 18px 16px 40px;
-}
-
-.notice {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 14px 16px;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-.notice-error {
-  border-color: #f3c7c7;
-  background: #fdf3f3;
-  color: var(--red-dark);
-}
-
-.notice-error p {
-  margin: 6px 0 0;
-  font-size: 13px;
-}
-
-/* Mobile-first: single column on phones, 2-up on wider screens. */
-.grid {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 14px;
-  grid-template-columns: 1fr;
-}
-
-@media (min-width: 520px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 820px) {
-  .grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.card-image {
-  height: 140px;
-  background: var(--purple-tint);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.card-image-fallback {
-  font-size: 12px;
-  color: var(--purple);
-  opacity: 0.7;
-  text-align: center;
-  padding: 0 12px;
-}
-
-.card-body {
-  padding: 12px 14px 14px;
-}
-
-.card-category {
-  margin: 0 0 4px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--muted);
-}
-
-.card-title {
-  margin: 0 0 4px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.35;
-}
-
-.card-weight {
-  margin: 0 0 8px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.card-price {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--red);
-}
-
-.card-meta {
-  margin: 8px 0 0;
-  font-size: 11px;
-  color: var(--muted);
 }

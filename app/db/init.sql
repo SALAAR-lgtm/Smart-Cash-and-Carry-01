@@ -1,4 +1,4 @@
--- Smart Cash & Carry — Sprint 0 schema
+-- Smart Cash & Carry — schema
 -- Every statement here is idempotent: safe to run on every boot.
 --
 -- NOTE: table names are capitalised and singular ON PURPOSE (carried over from
@@ -6,6 +6,11 @@
 --   SELECT * FROM "Product";
 -- Lowercase "products" fails with "relation does not exist" even though the
 -- table is right there. Same rule applies in PGlite.
+--
+-- "Order" is a SQL reserved word, so quoting it is not optional — an unquoted
+-- ORDER fails to parse. This is the one table where the convention really bites.
+--
+-- Product rows live in seed.sql (generated from data/products.csv), not here.
 
 CREATE TABLE IF NOT EXISTS "Category" (
   id   SERIAL PRIMARY KEY,
@@ -23,24 +28,41 @@ CREATE TABLE IF NOT EXISTS "Product" (
   available   BOOLEAN NOT NULL DEFAULT true
 );
 
-INSERT INTO "Category" (name) VALUES
-  ('Cooking Oils & Ghee'),
-  ('Toothpastes & Oral Care'),
-  ('Tea & Coffee')
-ON CONFLICT (name) DO NOTHING;
+-- Single admin, no signup flow. Seeded from ADMIN_USERNAME / ADMIN_PASSWORD
+-- on first boot (Sprint 4). password_hash is bcrypt, never plaintext.
+CREATE TABLE IF NOT EXISTS "Admin" (
+  id            SERIAL PRIMARY KEY,
+  username      TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL
+);
 
--- Sprint 0: three real products, one per category, just to prove the pipeline.
--- Sprint 1 replaces this with a loader for all 119 rows of data/products.csv.
--- Categories are looked up by name rather than by hardcoded id, because SERIAL
--- values drift once ON CONFLICT DO NOTHING skips an insert.
-INSERT INTO "Product" (item_id, name, weight, price, category_id, image_url) VALUES
-  ('ITEM-001', 'Sufi Canola Oil Pouch', '1 Litre', 598,
-    (SELECT id FROM "Category" WHERE name = 'Cooking Oils & Ghee'),
-    '/images/ITEM-001.jpg'),
-  ('ITEM-009', 'Colgate MaxFresh Spicy Fresh Toothpaste 125g', '125 g', 325,
-    (SELECT id FROM "Category" WHERE name = 'Toothpastes & Oral Care'),
-    '/images/ITEM-009.jpg'),
-  ('ITEM-046', 'Lipton Yellow Label Tea - 900g - Save Rs. 200', '900 g', 1999,
-    (SELECT id FROM "Category" WHERE name = 'Tea & Coffee'),
-    '/images/ITEM-046.jpg')
-ON CONFLICT (item_id) DO NOTHING;
+-- No status pipeline by design: local delivery doesn't need
+-- "preparing / shipped / delivered". One completed flag, toggled by the admin.
+CREATE TABLE IF NOT EXISTS "Order" (
+  id            SERIAL PRIMARY KEY,
+  order_ref     TEXT UNIQUE,
+  customer_name TEXT NOT NULL,
+  phone         TEXT NOT NULL,
+  address       TEXT NOT NULL,
+  total         NUMERIC(10, 2) NOT NULL DEFAULT 0,
+  completed     BOOLEAN NOT NULL DEFAULT false,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- product_name / price are SNAPSHOTTED at order time, so editing a product's
+-- price later never rewrites the total on an order that was already placed.
+-- product_id is nullable on purpose: if a product is ever deleted, historical
+-- order lines must survive. The snapshot is the record, not the join.
+CREATE TABLE IF NOT EXISTS "OrderItem" (
+  id                    SERIAL PRIMARY KEY,
+  order_id              INTEGER NOT NULL REFERENCES "Order"(id) ON DELETE CASCADE,
+  product_id            INTEGER REFERENCES "Product"(id),
+  product_name_snapshot TEXT NOT NULL,
+  price_snapshot        NUMERIC(10, 2) NOT NULL,
+  qty                   INTEGER NOT NULL DEFAULT 1,
+  subtotal              NUMERIC(10, 2) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS "OrderItem_order_id_idx" ON "OrderItem" (order_id);
+CREATE INDEX IF NOT EXISTS "Product_category_id_idx" ON "Product" (category_id);
+CREATE INDEX IF NOT EXISTS "Order_created_at_idx" ON "Order" (created_at DESC);

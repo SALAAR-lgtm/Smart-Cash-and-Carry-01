@@ -35,6 +35,13 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       BACKEND_PORT: 4000
+      IMAGES_DIR: /data/images
+    volumes:
+      # The catalogue is mounted, not baked into the image. Two reasons:
+      # 14 MB of images would bloat every build layer, and the mart can add
+      # stock without a rebuild. Read-only — the app never writes here.
+      # Path is relative to THIS file (app/), so ../data/images = repo/data/images.
+      - ../data/images:/data/images:ro
     ports:
       - "4000:4000"
     depends_on:

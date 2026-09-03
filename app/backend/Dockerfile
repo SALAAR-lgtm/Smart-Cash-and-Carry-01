@@ -12,6 +12,13 @@ RUN cd backend && npm install --omit=dev
 COPY backend/src ./backend/src
 COPY db ./db
 
+# Where product images are served from. docker-compose mounts the catalogue
+# here as a read-only volume (../data/images), so 14 MB of photos never enter
+# the image layers and the mart can add stock without a rebuild.
+# data/ is deliberately NOT copied in: the compose build context is app/, and
+# data/ sits at the repo root, outside it. Mounting is the fix, not COPY.
+ENV IMAGES_DIR=/data/images
+
 WORKDIR /app/backend
 EXPOSE 4000
 
