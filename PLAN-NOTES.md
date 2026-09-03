@@ -166,7 +166,15 @@ Details and per-image notes in `reference/mockups/README.md`.
 
 ## 6. CURRENT STATE — rewrite every session
 
-**As of 3 Sep 2026, 06:30 — Sprint 1 code complete, verified, NOT YET PUSHED.**
+**As of 3 Sep 2026, 06:50 — Sprint 1 pushed and clean. Git tracking refs repaired. Ready for Sprint 2.**
+
+- **Sprint 1 is on GitHub at `4f1bf86`** (`SALAAR-lgtm/Smart-Cash-and-Carry-01`).
+  Push works normally. Working tree is clean.
+- **Local git tracking refs were broken and are now fixed.** This git build
+  cannot create subdirectories under `.git/refs/`, so `origin/master` never
+  persisted and `git status` reported `[gone]` / `[ahead N]`. Remote-tracking
+  refs now live in `.git/packed-refs` (see the gotcha in section 8). **After
+  every push run `git sync`** — that is `git fetch` + `tools/track-ref.sh`.
 
 - **Sprint 1 done and verified by cold start.** Deleted `.pgdata`, booted both
   servers from nothing: `119 products`, category counts matching the verified
@@ -235,6 +243,8 @@ assumption.
 
 **Push after every sprint:** `git add -A && git commit -m "..." && git push`.
 Re-run the secret scan in section 8 first — the repo is public.
+**Then run `git sync`**, or `git status` will keep claiming the branch is ahead
+of `origin/master`. See the git gotcha in section 8.
 
 ---
 
@@ -278,6 +288,27 @@ Re-run the secret scan in section 8 first — the repo is public.
   `curl --noproxy '*' http://localhost:4000/...`. Real status codes:
   `HTTP 000` = connection refused (genuinely down), `200`/`{}` = fine.
   Qasim's own terminal has no proxy, so this only affects Buddy.
+- **This git build cannot create subdirectories under `.git/refs/`.** Any
+  *nested* ref — anything of the form `refs/remotes/<remote>/<branch>` — fails
+  to write. `git update-ref` and `git fetch` both **exit 0 and report success**
+  while writing nothing, and git deletes the directory it should have written
+  into. Single-level refs (`refs/heads/master`, `refs/remotes/foo`) write fine.
+  - Symptoms: `git status -sb` shows `## master...origin/master [gone]` right
+    after a successful push, or `[ahead N]` forever after a push.
+  - Cause is not the sandbox, not hooks, not a symlink, not `fetch.prune`, not
+    `git maintenance`. Ruled out by bisection on 3 Sep 2026. Reproduces inside
+    and outside the sandbox, in bash and in PowerShell, on git
+    2.55.0.windows.3 (PortableGit 1.2.0).
+  - **Fix already applied:** remote-tracking refs live in `.git/packed-refs`,
+    which git reads natively and which needs no subdirectory. A fresh clone
+    uses this same format, which is why clones look healthy.
+  - **After every push run `git sync`** (= `git fetch` +
+    `bash tools/track-ref.sh`). The script asks the remote for the true sha
+    with `git ls-remote` and rewrites the `packed-refs` line. Pushing updates
+    the remote fine; it is only the *local* tracking ref that goes stale.
+  - If the repo is ever re-cloned, nothing needs fixing — the clone ships a
+    correct `packed-refs`. The `git sync` alias is per-clone, so set it again:
+    `git config alias.sync '!git fetch && bash tools/track-ref.sh'`
 - **The GitHub repo is public — scan before every push:**
   ```
   git ls-files | grep -i "\.env$"          # must print nothing
@@ -374,3 +405,27 @@ Re-run the secret scan in section 8 first — the repo is public.
 - Verified by genuine cold start (deleted `.pgdata`, booted from nothing):
   119 products, counts per category matching the verified inventory exactly,
   all 119 images 200, frontend 200, Tailscale IP 200.
+
+### 3 Sep 2026 — git tracking-ref bug diagnosed and fixed
+- Sprint 1 pushed fine, but `git status` kept reporting
+  `## master...origin/master [gone]`. Nothing was actually lost — `git ls-remote`
+  confirmed the remote had every commit — but the local tracking ref vanished.
+- Took ~20 probes to find, and every plausible theory was wrong: not a hook,
+  not `fetch.prune`, not a symlink, not permissions, not the filesystem (NTFS),
+  and not the WorkBuddy sandbox (reproduced with it disabled).
+- **Root cause: this git build cannot create a subdirectory under `.git/refs/`.**
+  Isolated it by writing refs at different depths:
+  - `refs/heads/__probe` and `refs/remotes/foo` (one level) → written
+  - `refs/remotes/origin/master`, `refs/remotes/origin/zzz`,
+    `refs/remotes/upstream/master`, `refs/remotes/origin2/master` (nested) →
+    all exit 0, write nothing, and git deletes the parent directory
+- The tell that cracked it: a **fresh clone was healthy**, because clones put
+  refs in `packed-refs` and never need a subdirectory. That pointed straight at
+  directory creation, not at fetching or networking.
+- **Fix:** wrote `refs/remotes/origin/master` into `.git/packed-refs` by hand,
+  plus `tools/track-ref.sh` to keep it current, plus a `git sync` alias.
+  Validated the full loop: push → status says `[ahead 1]` → `git sync` →
+  status clean. Also confirmed `git sync` is idempotent and survives `git fetch`.
+- Left `maintenance.auto=false` in the repo config — harmless (this repo is
+  tiny) and it stops a background process from touching a ref store that is
+  already fragile.
