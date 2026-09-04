@@ -166,10 +166,17 @@ Details and per-image notes in `reference/mockups/README.md`.
 
 ## 6. CURRENT STATE — rewrite every session
 
-**As of 3 Sep 2026, 06:50 — Sprint 1 pushed and clean. Git tracking refs repaired. Ready for Sprint 2.**
+**As of 4 Sep 2026, 19:30 — Sprint 2 pushed and verified. Ready for Sprint 3.**
 
-- **Sprint 1 is on GitHub at `4f1bf86`** (`SALAAR-lgtm/Smart-Cash-and-Carry-01`).
-  Push works normally. Working tree is clean.
+- **Sprint 2 is on GitHub at `d8e6f38`** (`SALAAR-lgtm/Smart-Cash-and-Carry-01`).
+  Working tree clean, remote matches local HEAD.
+- **Catalogue browsing works end to end.** `GET /api/categories` returns the 5
+  real categories with counts (Oils 8, Masalas 42, Soaps 15, Tea 17,
+  Toothpastes 37 = 119). `?category=` and `?q=` filters work alone and
+  together. `GET /api/products/:id` serves the detail view.
+- **Frontend was split up** into `src/api.js` + `src/components/` (Notice,
+  CategoryRail, ProductCard, ProductDetail) instead of one growing `App.jsx`.
+  Further sprints should add components there, not bloat App.jsx.
 - **Local git tracking refs were broken and are now fixed.** This git build
   cannot create subdirectories under `.git/refs/`, so `origin/master` never
   persisted and `git status` reported `[gone]` / `[ahead N]`. Remote-tracking
@@ -218,28 +225,44 @@ python tools/generate-seed.py     # from the repo root
 
 ## 7. NEXT ACTION — rewrite every session
 
-**Single next step: Sprint 2 — customer catalog.**
+**Single next step: Sprint 3 — cart + checkout.**
 
-Build the browsing experience on top of the 119 real products now in the
-database. In order:
+Done when: an order lands in Postgres, and changing a product's price
+afterwards does not alter the total of the order already placed.
 
-1. **Category rail.** `GET /api/categories` returning each category with a
-   product count. Categories come from the database, never hardcoded — the
-   mockups show 9, reality has 5.
-2. **Browse by category**, with a product grid reusing the card built in
-   Sprint 1. Mobile-first: 1 column → 2 at `sm` → 3 at `lg`.
-3. **Live search** over `Product.name`, filtering as the user types.
-4. **Product detail view** — full image, name, weight, PKR price, category,
-   availability. This is where the `− 1 +` stepper from the mockups goes, but
-   wiring it to a cart is Sprint 3, so leave the stepper inert for now.
-5. Done when: on a phone over Tailscale you can tap through all 5 categories,
-   search finds a product by partial name, and a detail page shows the real
-   photograph at full size.
+In order:
 
-**Do this before writing code:** Qasim should load `http://100.98.5.62:5173`
-on his phone once. Sprint 0 claimed it was reachable and it has never actually
-been confirmed on a device — do not stack Sprint 2 on top of an untested
-assumption.
+1. **Cart state.** A `CartContext` in `src/` holding `{product, qty}` lines, so
+   ProductDetail and the basket screen share one source of truth. Persist to
+   `localStorage` — a refresh that empties the basket would lose a real order.
+2. **Wire up the controls Sprint 2 left disabled:** the `− 1 +` stepper and
+   "Add to basket" in `ProductDetail`, plus a basket indicator in the header.
+3. **Basket screen** — line items with per-line steppers, remove, and a total.
+4. **Checkout form** — `customer_name`, `phone`, `address`. All three are
+   NOT NULL in the schema; validate on the client for feedback and again on the
+   server because the client is not trustworthy.
+5. **`POST /api/orders`.** Insert the `Order` and its `OrderItem`s in ONE
+   transaction — a partial order (header but no lines, or lines with no header)
+   is worse than a failed one. Generate `order_ref` server-side
+   (e.g. `SCC-<timestamp>-<random>`).
+6. **The server recomputes every price.** The client sends product ids and
+   quantities ONLY. The backend reads current prices from `"Product"` and
+   calculates the total itself. A client-supplied price is a customer setting
+   their own bill; a client-supplied total is worse. This is also the point of
+   the `price_snapshot` columns — see the verification step.
+7. **Confirmation screen** showing the order reference.
+8. **Verify the rule that makes this sprint "done":** place an order, then
+   UPDATE that product's price, then re-read the order. The total must be
+   unchanged. If it moves, the snapshot is not being written.
+
+No payment gateway — cash on delivery. It is a local mart with its own
+delivery, and taking card payments would add PCI scope for no benefit.
+
+**Overdue, still not done: the phone test.** `http://100.98.5.62:5173` answers
+from this PC, but Qasim has not loaded it on an actual phone in three sprints.
+Everything from Sprint 0 onward rests on that untested assumption. It takes
+thirty seconds and it is the only thing standing between us and finding out at
+deploy time that the whole mobile-first premise is wrong. Do it before Sprint 3.
 
 **Push after every sprint:** `git add -A && git commit -m "..." && git push`.
 Re-run the secret scan in section 8 first — the repo is public.
@@ -288,6 +311,17 @@ of `origin/master`. See the git gotcha in section 8.
   `curl --noproxy '*' http://localhost:4000/...`. Real status codes:
   `HTTP 000` = connection refused (genuinely down), `200`/`{}` = fine.
   Qasim's own terminal has no proxy, so this only affects Buddy.
+- **`curl -o <file>` silently writes nothing inside Buddy's sandbox**, and then
+  reports `size_download: 0` — which looks exactly like a server sending an
+  empty file. Wasted time on this on 4 Sep 2026: images appeared to serve as
+  0 bytes when they were byte-perfect. To measure a response, pipe it instead:
+  `curl --noproxy '*' -s <url> | wc -c`. Compare against `wc -c < file` on disk.
+- **A corrupt `.git/packed-refs` bricks every git command** with
+  `fatal: unterminated line in .git/packed-refs`. It happened on 4 Sep 2026
+  (file zero-filled). Repair: `bash tools/track-ref.sh` — it checks for NUL
+  bytes and moves the file aside before calling git, so it works even when git
+  itself is broken. If it ever fails, `mv .git/packed-refs /tmp/` by hand and
+  re-run it.
 - **This git build cannot create subdirectories under `.git/refs/`.** Any
   *nested* ref — anything of the form `refs/remotes/<remote>/<branch>` — fails
   to write. `git update-ref` and `git fetch` both **exit 0 and report success**
@@ -429,3 +463,34 @@ of `origin/master`. See the git gotcha in section 8.
 - Left `maintenance.auto=false` in the repo config — harmless (this repo is
   tiny) and it stops a background process from touching a ref store that is
   already fragile.
+
+### 4 Sep 2026 — packed-refs corruption, and Sprint 2
+- **`.git/packed-refs` was found zero-filled** (114 NUL bytes) when this
+  session started. Every git command failed with
+  `fatal: unterminated line in .git/packed-refs`. Nothing was lost — the commits
+  were all on GitHub and local `HEAD` was correct.
+- The nasty part was the failure mode: **a corrupt `packed-refs` bricks git
+  entirely**, including any script that would fix it. So `tools/track-ref.sh`
+  now checks for NUL bytes and moves the file aside *before* calling git at
+  all, and reads the file back after writing to confirm the write stuck. Both
+  paths were tested by deliberately corrupting the file.
+- Cause is not certain. Most likely an unflushed write across a shutdown — the
+  file's mtime never changed, so something zeroed the data blocks in place.
+  Worth watching: if it recurs, suspect the disk on `E:` before suspecting git.
+- **Sprint 2 built and verified.** Three new endpoints (categories with counts,
+  filtered/searched products, single product). Counts came back 8/42/15/17/37
+  = 119, matching the verified inventory exactly.
+- Two things tested deliberately rather than assumed:
+  - **Injection via `?q=`** (`'; DROP TABLE "Product"; --`) returned an empty
+    list and left all 119 products intact. Worth writing down because it is the
+    first user input this app has ever taken.
+  - **400/404 paths** return JSON errors with useful messages rather than an
+    unhandled crash.
+- **Chose to render the stepper and "Add to basket" disabled** rather than
+  hiding them. A control that silently does nothing is worse than one that
+  visibly is not ready — and the layout gets reviewed before Sprint 3 builds on
+  it.
+- A "0 bytes" image scare turned out to be a `curl` artifact: the sandbox
+  blocks `curl -o` from creating files in the repo, so it reported 0 bytes
+  downloaded. Measured through a pipe instead: 67283 bytes, byte-identical to
+  disk. Recorded so it is not re-diagnosed.
