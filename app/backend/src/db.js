@@ -24,10 +24,25 @@ const driver = process.env.DB_DRIVER || 'pglite';
 
 let query;
 let exec;
+let withTransaction;
 
 if (driver === 'pglite') {
   const { PGlite } = await import('@electric-sql/pglite');
-  const dataDir = process.env.PGLITE_DIR || path.join(here, '../../.pgdata');
+
+  // Resolved against the project root, NOT the cwd.
+  //
+  // .env sets PGLITE_DIR=./.pgdata. A relative path like that means "relative
+  // to wherever node was started" — so `node src/server.js` from inside
+  // backend/ silently created backend/.pgdata, a second, empty database, while
+  // the real one sat at app/.pgdata. Both had 119 seeded products, so nothing
+  // looked wrong until an order was placed and then could not be found again.
+  //
+  // Anchoring to projectRoot makes the location identical no matter the cwd.
+  // Only one process may own a PGlite directory at a time.
+  const projectRoot = path.join(here, '../../');
+  const dataDir = process.env.PGLITE_DIR
+    ? path.resolve(projectRoot, process.env.PGLITE_DIR)
+    : path.join(projectRoot, '.pgdata');
 
   // PGlite writes postmaster.pid when it opens a data directory and deletes it
   // on a clean shutdown. If the process is killed (Ctrl+C, crash, timeout) that
@@ -46,6 +61,16 @@ if (driver === 'pglite') {
 
   query = async (sql, params = []) => (await db.query(sql, params)).rows;
   exec = async (sql) => { await db.exec(sql); };
+
+  // PGlite hands the callback a transaction-scoped handle. Every statement
+  // inside fn() MUST go through that handle — calling the outer `query` there
+  // would silently run outside the transaction.
+  withTransaction = (fn) =>
+    db.transaction(async (tx) => {
+      const scoped = async (sql, params = []) =>
+        (await tx.query(sql, params)).rows;
+      return fn(scoped);
+    });
 } else {
   const { Pool } = await import('pg');
   const pool = new Pool({
@@ -58,6 +83,33 @@ if (driver === 'pglite') {
 
   query = async (sql, params = []) => (await pool.query(sql, params)).rows;
   exec = async (sql) => { await pool.query(sql); };
+
+  // A pool hands out a different connection per query, so a transaction has to
+  // borrow ONE client and hold it for the whole block. Running BEGIN and COMMIT
+  // through pool.query() would land on unrelated connections and appear to
+  // work while doing nothing.
+  withTransaction = async (fn) => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const scoped = async (sql, params = []) =>
+        (await client.query(sql, params)).rows;
+      const result = await fn(scoped);
+      await client.query('COMMIT');
+      return result;
+    } catch (err) {
+      // If the connection died, ROLLBACK throws too. Swallow that so the
+      // original error — the one actually worth seeing — is what surfaces.
+      try {
+        await client.query('ROLLBACK');
+      } catch {
+        /* connection already unusable */
+      }
+      throw err;
+    } finally {
+      client.release();
+    }
+  };
 }
 
 // Runs db/init.sql (schema) then db/seed.sql (catalogue) on every boot.
@@ -77,4 +129,4 @@ export async function initDb() {
   }
 }
 
-export { query, driver };
+export { query, exec, withTransaction, driver };

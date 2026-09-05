@@ -166,22 +166,44 @@ Details and per-image notes in `reference/mockups/README.md`.
 
 ## 6. CURRENT STATE — rewrite every session
 
-**As of 4 Sep 2026, 19:30 — Sprint 2 pushed and verified. Ready for Sprint 3.**
+**As of 5 Sep 2026, 12:20 — Sprint 3 built and verified. Ready to push.**
 
-- **Sprint 2 is on GitHub at `d8e6f38`** (`SALAAR-lgtm/Smart-Cash-and-Carry-01`).
-  Working tree clean, remote matches local HEAD.
-- **Catalogue browsing works end to end.** `GET /api/categories` returns the 5
-  real categories with counts (Oils 8, Masalas 42, Soaps 15, Tea 17,
-  Toothpastes 37 = 119). `?category=` and `?q=` filters work alone and
-  together. `GET /api/products/:id` serves the detail view.
+- **Sprint 3 is done.** Cart, checkout and `POST /api/orders` all work. The rule
+  that defines the sprint — change a product's price, old orders must not move —
+  is now proven by an automated check, not by eyeballing a screen.
+- **The price snapshot holds.** `tools/verify-snapshot.mjs` places an order,
+  bumps that product's price to 999, re-reads the order, and asserts the total,
+  `price_snapshot`, `subtotal` and `product_name_snapshot` are all unchanged.
+  It also asserts the catalogue price DID move — otherwise a broken UPDATE would
+  make the test pass for the wrong reason. All checks passed on
+  `SCC-20260905-FF933C`: 2 × PKR 450 = 900.00, product 40 repriced to 999.00,
+  order still reads 900.00, price then restored.
+- **A rejected order leaves nothing behind.** An order mixing a valid product
+  with a non-existent id returned `409` and left zero `Order` rows and zero
+  orphaned `OrderItem` rows. The transaction wrapper works under PGlite.
+- **The server is the only source of price truth.** A client that sent
+  `"total":"1.00"` alongside `price:"1.00"` and `name:"FREE STUFF"` was charged
+  the real 900.00 — all of it ignored. Duplicate product ids merge (1× + 2×
+  = 3×) instead of producing duplicate lines.
+- **Found and fixed a real footgun: two databases.** `.env` set
+  `PGLITE_DIR=./.pgdata`, a *relative* path, so the data dir followed the working
+  directory. Running `node src/server.js` from `backend/` created a second, empty
+  `app/backend/.pgdata` while the real one sat at `app/.pgdata`. Both had 119
+  seeded products, so nothing looked wrong — the failure mode is placing an order
+  and then not being able to find it. `db.js` now resolves `PGLITE_DIR` against
+  the project root, so the location is the same from any cwd. The stray (0
+  orders, seed data only) was deleted. `tools/inspect-pgdata.mjs` compares
+  databases if this ever looks suspicious again.
+- **Sprint 2 is still verified.** 119 products, category counts 8/42/15/17/37
+  matching the inventory exactly, `?category=` and `?q=` working alone and
+  together, an injection attempt returning nothing with all 119 rows intact.
+- **Local git tracking refs live in `.git/packed-refs`.** This git build cannot
+  create subdirectories under `.git/refs/`, so `origin/master` never persisted
+  and `git status` reported `[gone]` / `[ahead N]`. **After every push run
+  `git sync`** — that is `git fetch` + `tools/track-ref.sh`. See section 8.
 - **Frontend was split up** into `src/api.js` + `src/components/` (Notice,
   CategoryRail, ProductCard, ProductDetail) instead of one growing `App.jsx`.
   Further sprints should add components there, not bloat App.jsx.
-- **Local git tracking refs were broken and are now fixed.** This git build
-  cannot create subdirectories under `.git/refs/`, so `origin/master` never
-  persisted and `git status` reported `[gone]` / `[ahead N]`. Remote-tracking
-  refs now live in `.git/packed-refs` (see the gotcha in section 8). **After
-  every push run `git sync`** — that is `git fetch` + `tools/track-ref.sh`.
 
 - **Sprint 1 done and verified by cold start.** Deleted `.pgdata`, booted both
   servers from nothing: `119 products`, category counts matching the verified
@@ -205,8 +227,8 @@ Details and per-image notes in `reference/mockups/README.md`.
 - **Servers were down when this session resumed** (confirmed `HTTP 000`). Not a
   regression — background processes die when the tool call that started them
   returns. Restarted and verified.
-- **Still unverified: the phone test.** `http://100.98.5.62:5173` answers 200
-  from this PC, but Qasim has not yet loaded it on an actual phone.
+- **Still unverified: the phone test — four sprints running.** `http://100.98.5.62:5173`
+  answers 200 from this PC, but Qasim has never loaded it on an actual phone.
 - Old August build still running on `uoci-worker`. Qasim chose to leave it up.
   It does not conflict — nothing of ours is on that VM.
 - The `lab` VM is still completely clean: no containers, no images.
@@ -225,44 +247,43 @@ python tools/generate-seed.py     # from the repo root
 
 ## 7. NEXT ACTION — rewrite every session
 
-**Single next step: Sprint 3 — cart + checkout.**
+**Single next step: Sprint 4 — admin auth, orders, analytics.**
 
-Done when: an order lands in Postgres, and changing a product's price
-afterwards does not alter the total of the order already placed.
+Done when: a donut chart shows the real revenue split by category, computed
+from orders that were actually placed.
+
+The customer side now works, but nobody can *see* an order once it is placed —
+there is no `GET /api/orders` at all. That is the gap this sprint closes, and it
+is what makes the thing useful to the mart owner rather than just demonstrable.
 
 In order:
 
-1. **Cart state.** A `CartContext` in `src/` holding `{product, qty}` lines, so
-   ProductDetail and the basket screen share one source of truth. Persist to
-   `localStorage` — a refresh that empties the basket would lose a real order.
-2. **Wire up the controls Sprint 2 left disabled:** the `− 1 +` stepper and
-   "Add to basket" in `ProductDetail`, plus a basket indicator in the header.
-3. **Basket screen** — line items with per-line steppers, remove, and a total.
-4. **Checkout form** — `customer_name`, `phone`, `address`. All three are
-   NOT NULL in the schema; validate on the client for feedback and again on the
-   server because the client is not trustworthy.
-5. **`POST /api/orders`.** Insert the `Order` and its `OrderItem`s in ONE
-   transaction — a partial order (header but no lines, or lines with no header)
-   is worse than a failed one. Generate `order_ref` server-side
-   (e.g. `SCC-<timestamp>-<random>`).
-6. **The server recomputes every price.** The client sends product ids and
-   quantities ONLY. The backend reads current prices from `"Product"` and
-   calculates the total itself. A client-supplied price is a customer setting
-   their own bill; a client-supplied total is worse. This is also the point of
-   the `price_snapshot` columns — see the verification step.
-7. **Confirmation screen** showing the order reference.
-8. **Verify the rule that makes this sprint "done":** place an order, then
-   UPDATE that product's price, then re-read the order. The total must be
-   unchanged. If it moves, the snapshot is not being written.
+1. **Admin login.** The `Admin` table already exists in `db/init.sql` but is
+   unused. Password hashing (bcrypt/argon2 — never store plaintext), a session
+   cookie, and a `requireAdmin` middleware guarding every `/api/admin/*` route.
+   Seed one admin user via a script, not by hand.
+2. **Server-side order history.** `GET /api/admin/orders` behind auth: newest
+   first, with line items. This is where the `price_snapshot` columns start
+   earning their keep — the list must show what was charged, not today's price.
+3. **Revenue analytics.** A single aggregate endpoint grouping
+   `OrderItem.subtotal` by `Category`. Use `price_snapshot * qty`, never the
+   live `Product.price`, or last week's numbers will move under you.
+4. **Donut chart in the admin UI.** Recharts or a hand-rolled SVG — check what
+   is already installed before adding a dependency. Mobile-first: it will be
+   read on the owner's phone.
+5. **Verify the same way Sprint 3 was verified:** place orders across at least
+   two categories, check the donut percentages add to 100, then change a price
+   and confirm the historical numbers do NOT move. Automate it under `tools/`
+   so it can be re-run.
 
-No payment gateway — cash on delivery. It is a local mart with its own
-delivery, and taking card payments would add PCI scope for no benefit.
+Do not add a payment gateway. Cash on delivery — it is a local mart with its own
+delivery, and taking cards would add PCI scope for no benefit.
 
 **Overdue, still not done: the phone test.** `http://100.98.5.62:5173` answers
-from this PC, but Qasim has not loaded it on an actual phone in three sprints.
+from this PC, but Qasim has not loaded it on an actual phone in four sprints.
 Everything from Sprint 0 onward rests on that untested assumption. It takes
 thirty seconds and it is the only thing standing between us and finding out at
-deploy time that the whole mobile-first premise is wrong. Do it before Sprint 3.
+deploy time that the whole mobile-first premise is wrong. Do it before Sprint 4.
 
 **Push after every sprint:** `git add -A && git commit -m "..." && git push`.
 Re-run the secret scan in section 8 first — the repo is public.
@@ -350,6 +371,27 @@ of `origin/master`. See the git gotcha in section 8.
   ```
   `app/.env` is gitignored and stays local. Never commit it. If a secret is ever
   pushed, rotating it is the fix — deleting the commit does not un-leak it.
+- **An HTTP proxy is set in the environment, and it lies about local ports.**
+  `http_proxy`/`https_proxy` point at `127.0.0.1:25771`, so a `curl` to a port
+  with nothing listening comes back as **502 Bad Gateway** instead of
+  "connection refused". A 502 therefore does NOT mean the server crashed. Always
+  pass `--noproxy '*'`, and check the port is real first:
+  ```
+  curl -s --noproxy '*' -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4000/api/health
+  netstat -ano | grep ':4000'
+  ```
+  The backend is on **4000** (`BACKEND_PORT` in `app/.env`), the frontend on
+  5173. Probing 3000 wasted time this session.
+- **Background processes do not survive between tool calls.** A server started
+  in one call is dead by the next, and the wrapper reports it as "failed" even
+  when it started cleanly. Do not diagnose this as a crash. Instead, start the
+  server *and* run the tests against it inside a single command:
+  ```
+  ( cd app/backend && node src/server.js ) &   # subshell, then
+  # ...wait for health, curl the endpoints, then kill and wait...
+  ```
+  PGlite allows exactly one owning process, so the server must be fully stopped
+  (`kill` + `wait` + short sleep) before any script opens `.pgdata` directly.
 
 ---
 
@@ -494,3 +536,33 @@ of `origin/master`. See the git gotcha in section 8.
   blocks `curl -o` from creating files in the repo, so it reported 0 bytes
   downloaded. Measured through a pipe instead: 67283 bytes, byte-identical to
   disk. Recorded so it is not re-diagnosed.
+
+### 5 Sep 2026 — Sprint 3 built and verified (cart + checkout)
+- **Sprint 3 is done.** `CartContext` with `localStorage`, working stepper and
+  "Add to basket", basket sheet, three-step checkout, `POST /api/orders` in a
+  single transaction, server-side pricing, confirmation screen.
+- **The defining rule is now machine-checked, not eyeballed.** Wrote
+  `tools/verify-snapshot.mjs`: place an order, reprice the product to 999, re-read
+  the order, assert the total / `price_snapshot` / `subtotal` / name snapshot are
+  unchanged, then restore the price. It also asserts the catalogue price DID
+  change — without that, a silently broken UPDATE would make the test pass for
+  the wrong reason. Passed on `SCC-20260905-FF933C` (2 × 450 = 900.00, product
+  repriced to 999.00, order still 900.00).
+- **Rollback verified.** An order with one valid and one non-existent product id
+  returned `409` and left zero `Order` rows and zero orphaned `OrderItem` rows.
+- **Server-side pricing verified against a hostile client.** A request sending
+  `"total":"1.00"`, `price:"1.00"` and `name:"FREE STUFF"` was charged the real
+  900.00. Duplicate product ids merge instead of creating duplicate lines.
+- **Found and fixed a real footgun — two databases.** `PGLITE_DIR=./.pgdata` is
+  relative to the cwd, so starting the server from `backend/` instead of `app/`
+  created a second, empty `app/backend/.pgdata` beside the real
+  `app/.pgdata`. Both had 119 seeded products, so the only symptom would have
+  been an order that vanished depending on how you started the server. `db.js`
+  now resolves `PGLITE_DIR` against the project root. Deleted the stray (0
+  orders, seed-only). Added `tools/inspect-pgdata.mjs` to compare databases.
+- **Two false alarms worth not repeating.** (1) Probing `http://127.0.0.1:3000`
+  returned 502 the whole time — the backend is on **4000** (`BACKEND_PORT`), and
+  the env has a proxy that turns "nothing listening" into a misleading 502.
+  (2) Starting the backend as a background task "failed"; it was actually fine.
+  Background processes do not survive between tool calls, so the server and the
+  tests that need it must run in the same process tree.

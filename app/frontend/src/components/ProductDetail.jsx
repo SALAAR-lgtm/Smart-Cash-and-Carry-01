@@ -1,31 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { formatPkr } from '../api';
+import { useCart } from '../cart';
+import { useDismiss } from '../hooks/useDismiss';
 
 // A bottom sheet on phones, a centred dialog on wider screens.
 //
 // Built as an overlay rather than a separate page/route: the catalogue scroll
 // position stays exactly where it was when the sheet closes, which matters on a
 // phone where a route change would drop the user back at the top of a
-// hundred-item list. Routing can come with the cart in Sprint 3 if it is needed.
+// hundred-item list.
 export default function ProductDetail({ product, onClose }) {
   const [imageFailed, setImageFailed] = useState(false);
+  const [qty, setQty] = useState(1);
+  const { add } = useCart();
 
-  useEffect(() => {
-    const handleKey = (event) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKey);
+  useDismiss(onClose);
 
-    // Stop the catalogue behind the sheet from scrolling. Without this, a
-    // swipe on the sheet scrolls the page underneath on mobile Safari.
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+  const inStock = product.available;
 
-    return () => {
-      document.removeEventListener('keydown', handleKey);
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [onClose]);
+  const handleAdd = () => {
+    if (!inStock) return;
+    add(product, qty);
+    // Close on add. The count on the basket button is the confirmation, and it
+    // puts the customer straight back to browsing in one tap — which is what
+    // you want when someone is building a basket item by item.
+    onClose();
+  };
 
   return (
     <div
@@ -85,34 +85,37 @@ export default function ProductDetail({ product, onClose }) {
             <span
               className={[
                 'rounded-full px-2.5 py-1 text-xs font-medium',
-                product.available
+                inStock
                   ? 'bg-green-50 text-green-700'
                   : 'bg-red-50 text-accent-dark',
               ].join(' ')}
             >
-              {product.available ? 'In stock' : 'Out of stock'}
+              {inStock ? 'In stock' : 'Out of stock'}
             </span>
             <span className="text-[11px] text-muted">{product.item_id}</span>
           </div>
 
-          {/* The quantity stepper and basket button belong to Sprint 3.
-              They are rendered disabled rather than hidden so the layout is
-              already visible and reviewable, and so nothing pretends to work
-              before it does. */}
-          <div className="mt-6 opacity-60" aria-disabled="true">
+          <div className="mt-6">
             <div className="mb-3 flex items-center justify-center gap-4">
               <button
                 type="button"
-                disabled
-                className="h-10 w-10 rounded-full border border-line text-lg text-muted"
+                onClick={() => setQty((current) => Math.max(1, current - 1))}
+                disabled={qty <= 1 || !inStock}
+                aria-label="Decrease quantity"
+                className="h-10 w-10 rounded-full border border-line text-lg leading-none text-ink transition hover:border-brand disabled:opacity-40 disabled:hover:border-line"
               >
                 &minus;
               </button>
-              <span className="w-6 text-center text-base">1</span>
+              {/* aria-live so a screen reader announces the new quantity. */}
+              <span aria-live="polite" className="w-8 text-center text-base">
+                {qty}
+              </span>
               <button
                 type="button"
-                disabled
-                className="h-10 w-10 rounded-full border border-line text-lg text-muted"
+                onClick={() => setQty((current) => Math.min(99, current + 1))}
+                disabled={qty >= 99 || !inStock}
+                aria-label="Increase quantity"
+                className="h-10 w-10 rounded-full border border-line text-lg leading-none text-ink transition hover:border-brand disabled:opacity-40 disabled:hover:border-line"
               >
                 +
               </button>
@@ -120,15 +123,12 @@ export default function ProductDetail({ product, onClose }) {
 
             <button
               type="button"
-              disabled
-              className="w-full rounded-xl bg-brand py-3 text-sm font-medium text-white"
+              onClick={handleAdd}
+              disabled={!inStock}
+              className="w-full rounded-xl bg-brand py-3 text-sm font-medium text-white transition hover:bg-brand-dark disabled:opacity-40 disabled:hover:bg-brand"
             >
-              Add to basket
+              {inStock ? 'Add to basket' : 'Out of stock'}
             </button>
-
-            <p className="mt-2.5 text-center text-[11px] text-muted">
-              Ordering is switched on in the next stage of the build.
-            </p>
           </div>
         </div>
       </div>
